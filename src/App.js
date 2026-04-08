@@ -161,17 +161,13 @@ function intensityColor(n) {
   return map[n] || '#888';
 }
 
-// ─── SCREEN: Login / Register ────────────────────────────────────────────────
+// ─── SCREEN: Login ───────────────────────────────────────────────────────────
+// FIX: entire login screen is new — app previously skipped auth entirely
 const LoginScreen = ({ onLogin }) => {
-  const [mode, setMode]         = useState('login'); // 'login' | 'register'
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName]   = useState('');
-  const [role, setRole]           = useState('aide');
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState('');
-  const [success, setSuccess]     = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
 
   const handleLogin = async () => {
     if (!email || !password) { setError('Email and password required'); return; }
@@ -189,156 +185,21 @@ const LoginScreen = ({ onLogin }) => {
     }
   };
 
-  const handleRegister = async () => {
-    if (!email || !password || !firstName || !lastName) { setError('All fields required'); return; }
-    if (password.length < 8) { setError('Password must be at least 8 characters'); return; }
-    setLoading(true); setError('');
-    try {
-      await apiFetch('/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ email, password, firstName, lastName, role }),
-      });
-      setSuccess('Account created! You can now sign in.');
-      setMode('login');
-      setPassword('');
-    } catch (err) {
-      setError(err.message || 'Registration failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const roles = [
-    { value: 'aide',    label: 'Paraprofessional / Aide' },
-    { value: 'teacher', label: 'Special Education Teacher' },
-    { value: 'bcba',    label: 'BCBA / Behavior Specialist' },
-    { value: 'admin',   label: 'School Administrator' },
-    { value: 'parent',  label: 'Parent / Guardian' },
-  ];
-
   return (
-    <div style={{ minHeight: '100vh', background: '#f0faf6', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ width: '100%', maxWidth: 420 }}>
-
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ width: 56, height: 56, borderRadius: 16, background: '#1D9E75', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
-            <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
-              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: -0.5 }}>
-            <span style={{ color: '#1D9E75' }}>Spectrum</span><span style={{ color: '#1a1a1a' }}>Track</span>
-          </div>
-          <div style={{ fontSize: 13, color: '#888', marginTop: 4 }}>Track. Understand. Support.</div>
-        </div>
-
-        {/* Card */}
-        <div style={{ background: 'white', borderRadius: 16, border: '0.5px solid #e0e0e0', padding: '28px 28px 24px' }}>
-
-          {/* Tab switcher */}
-          <div style={{ display: 'flex', background: '#f5f5f5', borderRadius: 10, padding: 4, marginBottom: 24 }}>
-            {['login','register'].map(m => (
-              <button key={m} onClick={() => { setMode(m); setError(''); setSuccess(''); }} style={{
-                flex: 1, padding: '8px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
-                fontSize: 13, fontWeight: 500, fontFamily: 'inherit',
-                background: mode === m ? 'white' : 'transparent',
-                color: mode === m ? '#1D9E75' : '#888',
-                boxShadow: mode === m ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-              }}>
-                {m === 'login' ? 'Sign in' : 'Create account'}
-              </button>
-            ))}
-          </div>
-
-          {/* Success banner */}
-          {success && (
-            <div style={{ background: '#E1F5EE', border: '0.5px solid #9FE1CB', borderRadius: 8, padding: '10px 12px', marginBottom: 16, fontSize: 13, color: '#0F6E56' }}>
-              {success}
-            </div>
-          )}
-
-          {/* Error banner */}
-          {error && (
-            <div style={{ background: '#FCEBEB', border: '0.5px solid #F09595', borderRadius: 8, padding: '10px 12px', marginBottom: 16, fontSize: 13, color: '#A32D2D' }}>
-              {error}
-            </div>
-          )}
-
-          {mode === 'login' ? (
-            <>
-              <div style={{ marginBottom: 12 }}>
-                <label style={{ fontSize: 12, fontWeight: 500, color: '#555', display: 'block', marginBottom: 5 }}>Email address</label>
-                <input type="email" placeholder="you@school.edu" value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '0.5px solid #ddd', fontSize: 14, fontFamily: 'inherit', outline: 'none' }} />
-              </div>
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ fontSize: 12, fontWeight: 500, color: '#555', display: 'block', marginBottom: 5 }}>Password</label>
-                <input type="password" placeholder="••••••••" value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '0.5px solid #ddd', fontSize: 14, fontFamily: 'inherit', outline: 'none' }} />
-              </div>
-              <button onClick={handleLogin} disabled={loading} style={{
-                width: '100%', padding: '12px', borderRadius: 10, border: 'none',
-                background: loading ? '#9FE1CB' : '#1D9E75', color: 'white',
-                fontSize: 15, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit'
-              }}>
-                {loading ? 'Signing in…' : 'Sign in'}
-              </button>
-            </>
-          ) : (
-            <>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 500, color: '#555', display: 'block', marginBottom: 5 }}>First name</label>
-                  <input type="text" placeholder="Maria" value={firstName}
-                    onChange={e => setFirstName(e.target.value)}
-                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '0.5px solid #ddd', fontSize: 14, fontFamily: 'inherit', outline: 'none' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 500, color: '#555', display: 'block', marginBottom: 5 }}>Last name</label>
-                  <input type="text" placeholder="Santos" value={lastName}
-                    onChange={e => setLastName(e.target.value)}
-                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '0.5px solid #ddd', fontSize: 14, fontFamily: 'inherit', outline: 'none' }} />
-                </div>
-              </div>
-              <div style={{ marginBottom: 12 }}>
-                <label style={{ fontSize: 12, fontWeight: 500, color: '#555', display: 'block', marginBottom: 5 }}>Email address</label>
-                <input type="email" placeholder="you@school.edu" value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '0.5px solid #ddd', fontSize: 14, fontFamily: 'inherit', outline: 'none' }} />
-              </div>
-              <div style={{ marginBottom: 12 }}>
-                <label style={{ fontSize: 12, fontWeight: 500, color: '#555', display: 'block', marginBottom: 5 }}>Password</label>
-                <input type="password" placeholder="Min. 8 characters" value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '0.5px solid #ddd', fontSize: 14, fontFamily: 'inherit', outline: 'none' }} />
-              </div>
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ fontSize: 12, fontWeight: 500, color: '#555', display: 'block', marginBottom: 5 }}>Your role</label>
-                <select value={role} onChange={e => setRole(e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '0.5px solid #ddd', fontSize: 14, fontFamily: 'inherit', outline: 'none', background: 'white' }}>
-                  {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                </select>
-              </div>
-              <button onClick={handleRegister} disabled={loading} style={{
-                width: '100%', padding: '12px', borderRadius: 10, border: 'none',
-                background: loading ? '#9FE1CB' : '#1D9E75', color: 'white',
-                fontSize: 15, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit'
-              }}>
-                {loading ? 'Creating account…' : 'Create account'}
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div style={{ textAlign: 'center', marginTop: 20, fontSize: 12, color: '#aaa' }}>
-          For schools and special education teams
-        </div>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+      <div style={{ fontSize: 24, fontWeight: 500, color: '#1D9E75', letterSpacing: -0.5, marginBottom: 4 }}>
+        Spectrum<span style={{ color: '#1a1a1a' }}>Track</span>
       </div>
+      <div style={{ fontSize: 12, color: '#888', marginBottom: 28 }}>Track. Understand. Support.</div>
+      <ErrorBanner message={error} />
+      <div style={{ width: '100%', marginBottom: 10 }}>
+        <input type="text" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} style={{ marginBottom: 0 }} />
+      </div>
+      <div style={{ width: '100%', marginBottom: 18 }}>
+        <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+      </div>
+      <BtnPrimary onClick={handleLogin} disabled={loading}>{loading ? 'Signing in…' : 'Sign in'}</BtnPrimary>
     </div>
   );
 };
@@ -1124,47 +985,243 @@ const AlertsScreen = ({ navigate, token, user }) => {
   );
 };
 
+// ─── SCREEN: Add Student ─────────────────────────────────────────────────────
+const AddStudentScreen = ({ navigate, token, user }) => {
+  const [firstName,   setFirstName]   = useState('');
+  const [lastName,    setLastName]    = useState('');
+  const [dob,         setDob]         = useState('');
+  const [commLevel,   setCommLevel]   = useState('');
+  const [reinforcers, setReinforcers] = useState('');
+  const [sensory,     setSensory]     = useState([]);
+  const [iepGoals,    setIepGoals]    = useState([{ name: '', target: '' }]);
+  const [loading,     setLoading]     = useState(false);
+  const [error,       setError]       = useState('');
+
+  const sensoryOptions = [
+    'Auditory sensitivity','Tactile avoidance','Visual overstimulation',
+    'Proprioceptive seeking','Vestibular seeking','Oral sensitivity'
+  ];
+
+  const toggleSensory = (s) => setSensory(prev =>
+    prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]
+  );
+
+  const addGoal    = () => setIepGoals(g => [...g, { name: '', target: '' }]);
+  const updateGoal = (i, field, val) => setIepGoals(g => g.map((goal, idx) => idx === i ? { ...goal, [field]: val } : goal));
+  const removeGoal = (i) => setIepGoals(g => g.filter((_, idx) => idx !== i));
+
+  const handleSave = async () => {
+    if (!firstName || !lastName) { setError('First and last name are required'); return; }
+    setLoading(true); setError('');
+    try {
+      const sensoryProfile = {};
+      sensoryOptions.forEach(s => { sensoryProfile[s.toLowerCase().replace(/ /g,'_')] = sensory.includes(s); });
+      const reinforcerList = reinforcers.split(',').map(r => r.trim()).filter(Boolean);
+      const goals = iepGoals.filter(g => g.name.trim());
+      const student = await apiFetch('/api/students', {
+        method: 'POST',
+        body: JSON.stringify({
+          first_name:          firstName.trim(),
+          last_name:           lastName.trim(),
+          date_of_birth:       dob || null,
+          communication_level: commLevel || null,
+          reinforcers:         reinforcerList,
+          sensory_profile:     sensoryProfile,
+          iep_goals:           goals,
+        }),
+      }, token);
+      navigate('student', student);
+    } catch (err) {
+      setError(err.message || 'Failed to add student');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const canAdd = ['admin','teacher','bcba'].includes(user?.role);
+  if (!canAdd) return (
+    <>
+      <Topbar left={<div><BtnBack onClick={() => navigate('home')} /><div style={{ fontSize:16, fontWeight:500, marginTop:2 }}>Add student</div></div>} />
+      <div className="scroll">
+        <div style={{ background:'#FCEBEB', borderRadius:8, padding:'12px 14px', fontSize:13, color:'#A32D2D' }}>Only admins, teachers, and BCBAs can add students.</div>
+      </div>
+    </>
+  );
+
+  return (
+    <>
+      <Topbar left={<div><BtnBack onClick={() => navigate('home')} /><div style={{ fontSize:16, fontWeight:500, marginTop:2 }}>Add student</div></div>} />
+      <div className="scroll">
+        <ErrorBanner message={error} />
+        <SectionLabel mt={0}>Basic info</SectionLabel>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10 }}>
+          <div>
+            <label style={{ fontSize:11, color:'#888', display:'block', marginBottom:4 }}>First name *</label>
+            <input type="text" placeholder="Emma" value={firstName} onChange={e => setFirstName(e.target.value)}
+              style={{ width:'100%', padding:'9px 11px', borderRadius:8, border:'0.5px solid #ddd', fontSize:13, fontFamily:'inherit', outline:'none' }} />
+          </div>
+          <div>
+            <label style={{ fontSize:11, color:'#888', display:'block', marginBottom:4 }}>Last name *</label>
+            <input type="text" placeholder="Johnson" value={lastName} onChange={e => setLastName(e.target.value)}
+              style={{ width:'100%', padding:'9px 11px', borderRadius:8, border:'0.5px solid #ddd', fontSize:13, fontFamily:'inherit', outline:'none' }} />
+          </div>
+        </div>
+        <div style={{ marginBottom:10 }}>
+          <label style={{ fontSize:11, color:'#888', display:'block', marginBottom:4 }}>Date of birth</label>
+          <input type="date" value={dob} onChange={e => setDob(e.target.value)}
+            style={{ width:'100%', padding:'9px 11px', borderRadius:8, border:'0.5px solid #ddd', fontSize:13, fontFamily:'inherit', outline:'none' }} />
+        </div>
+        <div style={{ marginBottom:10 }}>
+          <label style={{ fontSize:11, color:'#888', display:'block', marginBottom:4 }}>Communication level</label>
+          <select value={commLevel} onChange={e => setCommLevel(e.target.value)}
+            style={{ width:'100%', padding:'9px 11px', borderRadius:8, border:'0.5px solid #ddd', fontSize:13, fontFamily:'inherit', outline:'none', background:'white' }}>
+            <option value="">-- Select --</option>
+            <option value="Verbal">Verbal</option>
+            <option value="Limited verbal">Limited verbal</option>
+            <option value="AAC device">AAC device</option>
+            <option value="Sign language">Sign language</option>
+            <option value="Non-verbal">Non-verbal</option>
+          </select>
+        </div>
+        <div style={{ marginBottom:14 }}>
+          <label style={{ fontSize:11, color:'#888', display:'block', marginBottom:4 }}>Reinforcers (comma separated)</label>
+          <input type="text" placeholder="fidget toys, music, stickers" value={reinforcers} onChange={e => setReinforcers(e.target.value)}
+            style={{ width:'100%', padding:'9px 11px', borderRadius:8, border:'0.5px solid #ddd', fontSize:13, fontFamily:'inherit', outline:'none' }} />
+        </div>
+        <SectionLabel mt={0}>Sensory profile (tap to select)</SectionLabel>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:14 }}>
+          {sensoryOptions.map(s => (
+            <button key={s} onClick={() => toggleSensory(s)} style={{
+              fontSize:11, padding:'5px 10px', borderRadius:20, cursor:'pointer', fontFamily:'inherit',
+              background: sensory.includes(s) ? '#E1F5EE' : '#f5f5f5',
+              color:      sensory.includes(s) ? '#0F6E56' : '#666',
+              border:     sensory.includes(s) ? '1px solid #9FE1CB' : '0.5px solid #e0e0e0',
+            }}>{s}</button>
+          ))}
+        </div>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8, marginTop:14 }}>
+          <SectionLabel mt={0}>IEP goals</SectionLabel>
+          <button onClick={addGoal} style={{ fontSize:11, color:'#1D9E75', background:'none', border:'none', cursor:'pointer', fontFamily:'inherit' }}>+ Add goal</button>
+        </div>
+        {iepGoals.map((goal, i) => (
+          <div key={i} style={{ border:'0.5px solid #e8e8e8', borderRadius:10, padding:'10px 12px', marginBottom:8 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+              <span style={{ fontSize:11, color:'#888' }}>Goal {i+1}</span>
+              {iepGoals.length > 1 && <button onClick={() => removeGoal(i)} style={{ fontSize:11, color:'#A32D2D', background:'none', border:'none', cursor:'pointer', fontFamily:'inherit' }}>Remove</button>}
+            </div>
+            <input type="text" placeholder="e.g. Reduce elopement" value={goal.name} onChange={e => updateGoal(i,'name',e.target.value)}
+              style={{ width:'100%', padding:'8px 10px', borderRadius:7, border:'0.5px solid #ddd', fontSize:12, fontFamily:'inherit', outline:'none', marginBottom:6 }} />
+            <input type="text" placeholder="Target: ≤2x/day" value={goal.target} onChange={e => updateGoal(i,'target',e.target.value)}
+              style={{ width:'100%', padding:'8px 10px', borderRadius:7, border:'0.5px solid #ddd', fontSize:12, fontFamily:'inherit', outline:'none' }} />
+          </div>
+        ))}
+        <div style={{ marginTop:16 }}>
+          <BtnPrimary onClick={handleSave} disabled={loading}>{loading ? 'Saving…' : 'Add student'}</BtnPrimary>
+        </div>
+      </div>
+    </>
+  );
+};
+
+// ─── SCREEN: Admin Panel ──────────────────────────────────────────────────────
+const AdminScreen = ({ navigate, token, user }) => {
+  const [students, setStudents] = useState([]);
+  const [users,    setUsers]    = useState([]);
+  const [tab,      setTab]      = useState('students');
+  const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState('');
+
+  useEffect(() => {
+    Promise.all([
+      apiFetch('/api/students/all', {}, token),
+      apiFetch('/api/users', {}, token),
+    ]).then(([s, u]) => { setStudents(s); setUsers(u); })
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  if (!['admin','bcba'].includes(user?.role)) return (
+    <>
+      <Topbar left={<div><BtnBack onClick={() => navigate('home')} /><div style={{ fontSize:16, fontWeight:500, marginTop:2 }}>Admin panel</div></div>} />
+      <div className="scroll"><div style={{ background:'#FCEBEB', borderRadius:8, padding:'12px 14px', fontSize:13, color:'#A32D2D' }}>Admin access only.</div></div>
+    </>
+  );
+
+  return (
+    <>
+      <Topbar
+        left={<div><BtnBack onClick={() => navigate('home')} /><div style={{ fontSize:16, fontWeight:500, marginTop:2 }}>Admin panel</div></div>}
+        right={<BtnPrimary onClick={() => navigate('addstudent')} style={{ width:'auto', padding:'7px 13px', fontSize:12 }}>+ Student</BtnPrimary>}
+      />
+      <div className="scroll">
+        <ErrorBanner message={error} />
+        <div style={{ display:'flex', border:'0.5px solid #e0e0e0', borderRadius:8, overflow:'hidden', marginBottom:14 }}>
+          {['students','users'].map(t => (
+            <button key={t} onClick={() => setTab(t)} style={{ flex:1, padding:8, background: tab===t ? '#1D9E75' : 'none', border:'none', fontSize:12, fontWeight:500, color: tab===t ? 'white' : '#888', cursor:'pointer', fontFamily:'inherit', textTransform:'capitalize' }}>{t}</button>
+          ))}
+        </div>
+
+        {loading ? <Spinner /> : tab === 'students' ? (
+          <>
+            <SectionLabel mt={0}>All students ({students.length})</SectionLabel>
+            {students.length === 0 && <div style={{ fontSize:13, color:'#888', padding:'12px 0' }}>No students yet. Add one!</div>}
+            {students.map(s => (
+              <div key={s.id} onClick={() => navigate('student', s)} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 0', borderBottom:'0.5px solid #f0f0f0', cursor:'pointer' }}>
+                <Avatar initials={getInitials(`${s.first_name} ${s.last_name}`)} color={avatarColor(s.id)} size={38} />
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:14, fontWeight:500, color:'#1a1a1a' }}>{s.first_name} {s.last_name}</div>
+                  <div style={{ fontSize:11, color:'#888', marginTop:2 }}>{s.communication_level || 'No comm level set'}</div>
+                </div>
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke="#ccc" strokeWidth="2" strokeLinecap="round"/></svg>
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            <SectionLabel mt={0}>All users ({users.length})</SectionLabel>
+            {users.map(u => (
+              <div key={u.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 0', borderBottom:'0.5px solid #f0f0f0' }}>
+                <Avatar initials={getInitials(u.name || u.email)} color="blue" size={38} />
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:14, fontWeight:500, color:'#1a1a1a' }}>{u.name}</div>
+                  <div style={{ fontSize:11, color:'#888', marginTop:2 }}>{u.email}</div>
+                </div>
+                <span style={{ fontSize:11, padding:'2px 7px', borderRadius:20, fontWeight:500, background:'#E6F1FB', color:'#185FA5', textTransform:'capitalize' }}>{u.role}</span>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+    </>
+  );
+};
+
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [screen,  setScreen]  = useState('login');
   const [token,   setToken]   = useState(null);
   const [user,    setUser]    = useState(null);
-  // FIX: shared context object passed through navigate so all screens
-  // have access to the currently selected student, token, and user
   const [ctx,     setCtx]     = useState({});
 
-  // FIX: on mount, try to silently refresh token from cookie
   useEffect(() => {
     refreshAccessToken()
       .then(accessToken => {
         setToken(accessToken);
         return apiFetch('/api/auth/me', {}, accessToken);
       })
-      .then(me => {
-        setUser(me);
-        setScreen('home');
-      })
-      .catch(() => {
-        // No valid session — show login
-        setScreen('login');
-      });
+      .then(me => { setUser(me); setScreen('home'); })
+      .catch(() => setScreen('login'));
   }, []);
 
   const handleLogin = (accessToken, userData) => {
-    setToken(accessToken);
-    setUser(userData);
-    setScreen('home');
+    setToken(accessToken); setUser(userData); setScreen('home');
   };
 
   const handleLogout = async () => {
     await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' });
-    setToken(null);
-    setUser(null);
-    setCtx({});
-    setScreen('login');
+    setToken(null); setUser(null); setCtx({}); setScreen('login');
   };
 
-  // FIX: navigate now accepts an optional context payload (e.g. selected student)
   const navigate = (dest, payload = null) => {
     if (payload !== null) setCtx(c => ({ ...c, student: payload }));
     setScreen(dest);
@@ -1183,15 +1240,22 @@ export default function App() {
     parent:        <ParentScreen         {...commonProps} />,
     calendar:      <CalendarScreen       {...commonProps} />,
     alerts:        <AlertsScreen         {...commonProps} />,
+    addstudent:    <AddStudentScreen     {...commonProps} />,
+    admin:         <AdminScreen          {...commonProps} />,
   };
 
   return (
     <div style={{ width: 430, background: 'white', borderRadius: 16, border: '0.5px solid #e0e0e0', overflow: 'hidden', minHeight: 720, display: 'flex', flexDirection: 'column' }}>
       {screens[screen] || <div style={{ padding: 20, color: '#888' }}>Unknown screen.</div>}
-      {/* FIX: logout button shown when logged in */}
       {token && screen !== 'login' && (
-        <div style={{ padding: '6px 18px', borderTop: '0.5px solid #f0f0f0', display: 'flex', justifyContent: 'flex-end' }}>
-          <button onClick={handleLogout} style={{ background: 'none', border: 'none', fontSize: 11, color: '#aaa', cursor: 'pointer', fontFamily: 'inherit' }}>Sign out</button>
+        <div style={{ padding: '6px 18px', borderTop: '0.5px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {['admin','bcba'].includes(user?.role) && (
+            <button onClick={() => navigate('admin')} style={{ background:'none', border:'none', fontSize:11, color:'#1D9E75', cursor:'pointer', fontFamily:'inherit' }}>Admin panel</button>
+          )}
+          {!['admin','bcba'].includes(user?.role) && (
+            <button onClick={() => navigate('addstudent')} style={{ background:'none', border:'none', fontSize:11, color:'#1D9E75', cursor:'pointer', fontFamily:'inherit' }}>+ Add student</button>
+          )}
+          <button onClick={handleLogout} style={{ background:'none', border:'none', fontSize:11, color:'#aaa', cursor:'pointer', fontFamily:'inherit' }}>Sign out</button>
         </div>
       )}
     </div>
