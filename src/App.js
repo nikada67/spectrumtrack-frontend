@@ -1160,6 +1160,7 @@ const AddStudentScreen = ({ navigate, token, user }) => {
 };
 
 // ─── SCREEN: Admin Panel ──────────────────────────────────────────────────────
+// ─── SCREEN: Admin Panel ──────────────────────────────────────────────────────
 const AdminScreen = ({ navigate, token, user }) => {
   const [students, setStudents] = useState([]);
   const [users,    setUsers]    = useState([]);
@@ -1167,22 +1168,25 @@ const AdminScreen = ({ navigate, token, user }) => {
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState('');
 
-  // FIX: was inverted — non-admins were seeing the panel, admins were blocked
-  if (!['admin','bcba'].includes(user?.role)) return (
-    <>
-      <Topbar left={<div><BtnBack onClick={() => navigate('home')} /><div style={{ fontSize: 16, fontWeight: 500, marginTop: 2 }}>Admin panel</div></div>} />
-      <div className="scroll"><div style={{ background:'#FCEBEB', borderRadius:8, padding:'12px 14px', fontSize:13, color:'#A32D2D' }}>Admin access only.</div></div>
-    </>
-  );
+  const canAdmin = ['admin','bcba'].includes(user?.role);
 
+  // ✅ FIXED: useEffect must come BEFORE any early return, or React crashes
   useEffect(() => {
+    if (!canAdmin) { setLoading(false); return; }
     Promise.all([
       apiFetch('/api/students/all', {}, token),
       apiFetch('/api/users',        {}, token),
     ]).then(([s, u]) => { setStudents(s); setUsers(u); })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [token, canAdmin]);
+
+  if (!canAdmin) return (
+    <>
+      <Topbar left={<div><BtnBack onClick={() => navigate('home')} /><div style={{ fontSize: 16, fontWeight: 500, marginTop: 2 }}>Admin panel</div></div>} />
+      <div className="scroll"><div style={{ background:'#FCEBEB', borderRadius:8, padding:'12px 14px', fontSize:13, color:'#A32D2D' }}>Admin access only.</div></div>
+    </>
+  );
 
   return (
     <>
@@ -1200,7 +1204,7 @@ const AdminScreen = ({ navigate, token, user }) => {
         {loading ? <Spinner /> : tab === 'students' ? (
           <>
             <SectionLabel mt={0}>All students ({students.length})</SectionLabel>
-            {students.length === 0 && <div style={{ fontSize:13, color:'#888', padding:'12px 0' }}>No students yet.</div>}
+            {students.length === 0 && <div style={{ fontSize:13, color:'#888', padding:'12px 0' }}>No students yet. Click "+ Student" to add one.</div>}
             {students.map(s => (
               <div key={s.id} onClick={() => navigate('student', s)} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 0', borderBottom:'0.5px solid #f0f0f0', cursor:'pointer' }}>
                 <Avatar initials={getInitials(`${s.first_name} ${s.last_name}`)} color={avatarColor(s.id)} size={38} />
